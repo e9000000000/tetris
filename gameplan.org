@@ -86,7 +86,7 @@ cell_size: 30px
 [][][]
   []   - T, #943692, deep_purple
 
-- when pieces falled - change color to #5a5a5c
+- when pieces falled - change color to #5a5a5a
 - all laying pieces have same texture and color
 - all pieces have same texture, but falling ones have deferent colors depends on pices forms
 
