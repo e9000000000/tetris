@@ -1,0 +1,93 @@
+* controls
+left, right, up, down - arrows
+space - confirm in menus, instant place in game
+left, right - move piece in game
+down - speed up piece in game
+p - pause when in game
+
+* Stages
+** all
+background #000000
+text #cccccc
+highlighted text #ccff88
+
+
+** Menu
+TETRIS
+
+- play
+- exit
+** Game
+...
+** Pause
+PAUSE
+
+current score
+current time (hours:minutes:seconds)
+
+- continue
+- restart
+- to menu
+** Death
+DEATH
+
+final score
+final time (hours:minutes:seconds)
+
+- restart
+- to menu
+
+
+
+* Window
+margin: 7px;
+space between upper panel and game field: 30px
+
+upper panel height: 60px
+upper panel widht: 100%
+
+game field height: 30*20
+game field width: 30*10
+
+width: 30*10+7+7 = 314px
+height: 30*20+60+30+7+7 = 704px
+
+
+* Game field
+- no margins between cells
+
+width: 10 cells
+height: 20 cells
+cell_size: 30px
+
+* pieces
+[][]
+[][]   - O, #fef84c, yellow
+
+[]
+[]
+[]
+[]     - I, #51e1fc, cyan
+
+  [][]
+[][]   - S, #e93d1e, red
+
+[][]
+  [][] - Z, #79ae3d, green
+
+[]
+[]
+[][]   - L, #f69230, orange
+
+  []
+  []
+[][]   - J, #f16eb9, purple
+
+[][][]
+  []   - T, #943692, deep_purple
+
+- when pieces falled - change color to #5a5a5c
+- all laying pieces have same texture and color
+- all pieces have same texture, but falling ones have deferent colors depends on pices forms
+
+
