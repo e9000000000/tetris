@@ -21,7 +21,16 @@ TETRIS
 - play
 - exit
 ** Game
-...
+left:
+gamefield
+
+right:
+next piece
+current level
+current score
+current filled lines
+current time
+
 ** Pause
 PAUSE
 
