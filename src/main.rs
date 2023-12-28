@@ -56,22 +56,169 @@ impl Piece {
     fn new(literal: char) -> Piece {
         return Piece {
             x: 5,
-            y: 1,
+            y: 0,
             rotation: 0,
             literal: literal,
         }
     }
 
+    // return true if moved, false if something blocks move
+    fn move_x(&mut self, delta: i32, field: &GameField) -> bool {
+        let body = self.body();
+        match delta {
+            d if d < 0 => {
+                for y in 0..4 {
+                    for x in 0..4 {
+                        if body[y][x] != ' ' {
+                            let left_cell_i = self.x + x as i32 - 2 - 1;
+                            let cy = self.y - 2 + y as i32;
+                            if cy < 0 {
+                                continue;
+                            }
+                            if left_cell_i < 0 || field[cy as usize][left_cell_i as usize] == 'N' {
+                                return false;
+                            }
+                            break;
+                        }
+                    }
+                }
+            },
+            d if d > 0 => {
+                for y in 0..4 {
+                    for x in (0..4).rev() {
+                        if body[y][x] != ' ' {
+                            let right_cell_i = self.x + x as i32 - 2 + 1;
+                            let cy = self.y - 2 + y as i32;
+                            if cy < 0 {
+                                continue;
+                            }
+                            if right_cell_i >= 10 || field[cy as usize][right_cell_i as usize] == 'N' {
+                                return false;
+                            }
+                            break;
+                        }
+                    }
+                }
+            },
+            _ => (),
+        }
+        self.x += delta;
+        return true
+    }
+
+    fn is_move_down_awailable(&self, field: &GameField) -> bool {
+        let body = self.body();
+        for x in 0..4 {
+            for y in (0..4).rev() {
+                if body[y][x] != ' ' {
+                    let below_cell_i = self.y + y as i32 - 2 + 1;
+                    let cx = self.x - 2 + x as i32;
+                    if cx < 0 || below_cell_i < 0 {
+                        continue;
+                    }
+                    if below_cell_i >= 20 || field[below_cell_i as usize][cx as usize] == 'N' {
+                        return false;
+                    }
+                    break;
+                }
+            }
+        }
+        return true;
+    }
+
+    fn force_move_y(&mut self, delta: i32) {
+        self.y += delta;
+    }
+
+    fn rotate(&mut self) {
+        self.rotation = (self.rotation + 1) % 4;
+    }
+
+    fn put_on_a_field(&self, field: &mut GameField, force_gray: bool) {
+        let body = self.body();
+
+        for y in 0..field.len() {
+            for x in 0..field[y].len() {
+                if field[y][x] != 'N' {
+                    field[y][x] = ' '
+                }
+            }
+        }
+
+        for y in 0..4 {
+            for x in 0..4 {
+                let fx = self.x + x - 2;
+                let fy = self.y + y - 2;
+
+                if fx < 0 || fx >= 10 || fy < 0 || fy >= 20 || body[y as usize][x as usize] == ' ' {
+                    continue;
+                }
+
+                field[fy as usize][fx as usize] = match force_gray {
+                    true => 'N',
+                    false => body[y as usize][x as usize],
+                }
+            }
+        }
+    }
+
     fn body(&self) -> [[char; 4]; 4] {
         let lit = self.literal;
+        let rot = self.rotation;
 
-        return [
+        let default = [
             [' ', ' ', ' ', ' '],
             [' ', lit, lit, ' '],
             [' ', lit, lit, ' '],
             [' ', ' ', ' ', ' '],
-        ]
+        ];
+
+        return match lit {
+            // 'Y' => &yellow_piece_texture,
+            // 'C' => &cyan_piece_texture,
+            // 'P' => &purple_piece_texture,
+            // 'D' => &deep_purple_piece_texture,
+            // 'R' => &red_piece_texture,
+            // 'O' => &orange_piece_texture,
+            'G' => match rot {
+                0 => [
+                    [' ', ' ', ' ', ' '],
+                    [' ', ' ', lit, lit],
+                    [' ', lit, lit, ' '],
+                    [' ', ' ', ' ', ' '],
+                ],
+                1 => [
+                    [' ', ' ', lit, ' '],
+                    [' ', ' ', lit, lit],
+                    [' ', ' ', ' ', lit],
+                    [' ', ' ', ' ', ' '],
+                ],
+                2 => [
+                    [' ', ' ', ' ', ' '],
+                    [' ', ' ', lit, lit],
+                    [' ', lit, lit, ' '],
+                    [' ', ' ', ' ', ' '],
+                ],
+                3 => [
+                    [' ', lit, ' ', ' '],
+                    [' ', lit, lit, ' '],
+                    [' ', ' ', lit, ' '],
+                    [' ', ' ', ' ', ' '],
+                ],
+                _ => default,
+            },
+            _ => default,
+        }
     }
+}
+
+fn restart(field: &mut GameField, piece: &mut Piece) {
+    for y in 0..field.len() {
+        for x in 0..field[y].len() {
+            field[y][x] = ' ';
+        }
+    }
+    *piece = Piece::new('G');
 }
 
 pub fn main() {
@@ -88,12 +235,7 @@ pub fn main() {
     let mut frames_to_tick = 0;
     let mut state = GameState::menu;
     let mut field: GameField = [[' '; 10]; 20];
-    let mut piece = Piece::new('Y');
-
-    field[3][4] = 'Y';
-    field[4][4] = 'Y';
-    field[5][4] = 'Y';
-    field[5][5] = 'N';
+    let mut piece = Piece::new('G');
 
     // sdl stuff
     let sdl_context = sdl2::init().unwrap();
@@ -132,6 +274,7 @@ pub fn main() {
                     state = GameState::play;
                 },
                 Event::KeyDown { keycode: Some(Keycode::Num2), .. } => {
+                    restart(&mut field, &mut piece);
                     state = GameState::play;
                 },
                 Event::KeyDown { keycode: Some(Keycode::Num3), .. } => {
@@ -143,6 +286,34 @@ pub fn main() {
                 Event::KeyDown { keycode: Some(Keycode::Num0), .. } => {
                     state = GameState::test;
                 },
+                Event::KeyDown { keycode: Some(Keycode::Up), .. } => {
+                    match state {
+                        GameState::play => piece.rotate(),
+                        _ => (),
+                    }
+                },
+                Event::KeyDown { keycode: Some(Keycode::Left), .. } => {
+                    match state {
+                        GameState::play => {
+                            piece.move_x(-1, &field);
+                        },
+                        _ => (),
+                    }
+                },
+                Event::KeyDown { keycode: Some(Keycode::Right), .. } => {
+                    match state {
+                        GameState::play => {
+                            piece.move_x(1, &field);
+                        },
+                        _ => (),
+                    }
+                },
+                Event::KeyDown { keycode: Some(Keycode::Down), .. } => {
+                    match state {
+                        GameState::play => frames_to_tick = 1,
+                        _ => (),
+                    }
+                },
                 _ => {}
             }
         }
@@ -150,10 +321,6 @@ pub fn main() {
         // clear canvas
         canvas.set_draw_color(Color::RGB(0, 0, 0));
         canvas.clear();
-
-        // handle logic
-
-        // draw
 
         match state {
             GameState::test => {
@@ -188,47 +355,42 @@ pub fn main() {
                 canvas.set_draw_color(Color::RGB(30, 30, 30));
                 canvas.fill_rect(Rect::new(7+10*30+7, 0, 30*4 + 7, window_height));
 
+                let body = piece.body();
+
                 if frames_to_tick <= 0 {
                     frames_to_tick = tick_once_per_frames;
 
-                    piece.y += 1;
-
-                    // put piece on a field
-                    for y in 0..field.len() {
-                        for x in 0..field[y].len() {
-                            if field[y][x] != 'N' {
-                                field[y][x] = ' '
-                            }
-                        }
+                    if (!piece.is_move_down_awailable(&field)) {
+                        piece.put_on_a_field(&mut field, true);
+                        piece = Piece::new('G');
                     }
-                    for y in 0..4 {
-                        for x in 0..4 {
-                            let body = piece.body();
-                            let fx = piece.x + x - 2;
-                            let fy = piece.y + y - 2;
 
-                            if fx < 0 || fx >= 10 || fy < 0 || fy >= 20 || body[y as usize][x as usize] == ' ' {
-                                continue;
-                            }
-
-                            field[fy as usize][fx as usize] = body[y as usize][x as usize];
-                        }
-                    }
+                    piece.force_move_y(1);
                 } else {
                     frames_to_tick -= 1;
                 }
 
+                piece.put_on_a_field(&mut field, false);
+
+                // display field
                 for y in 0..field.len() {
                     for x in 0..field[y].len() {
-                        match field[y][x] {
-                            'Y' => {
-                                canvas.copy(&yellow_piece_texture, None, Some(Rect::new(7+x as i32 * 30, 7+y as i32 * 30, 30, 30))).unwrap();
-                            },
-                            'N' => {
-                                canvas.copy(&gray_piece_texture, None, Some(Rect::new(7+x as i32 * 30, 7+y as i32 * 30, 30, 30))).unwrap();
-                            },
-                            _ => (),
+                        if field[y][x] == ' ' {
+                            continue
                         }
+                        let texture = match field[y][x] {
+                            'N' => &gray_piece_texture,
+                            'Y' => &yellow_piece_texture,
+                            'C' => &cyan_piece_texture,
+                            'P' => &purple_piece_texture,
+                            'D' => &deep_purple_piece_texture,
+                            'R' => &red_piece_texture,
+                            'O' => &orange_piece_texture,
+                            'G' => &green_piece_texture,
+                            _ => &gray_piece_texture,
+                        };
+
+                        canvas.copy(texture, None, Some(Rect::new(7+x as i32 * 30, 7+y as i32 * 30, 30, 30))).unwrap();
                     }
                 }
             },
