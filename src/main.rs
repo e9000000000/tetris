@@ -396,6 +396,7 @@ pub fn main() {
     let bg_color = Color::RGB(0, 0, 0);
     let fg_color = Color::RGB(204, 204, 204);
     let hl_color = Color::RGB(204, 255, 136);
+    let at_color = Color::RGB(204, 40, 40);
 
     // mut
     let mut tick_once_per_frames = 50;
@@ -455,14 +456,20 @@ pub fn main() {
                     break 'running
                 },
                 Event::KeyDown { keycode: Some(Keycode::Num1), .. } => {
-                    state = GameState::Play;
+                    match state {
+                        GameState::Death => (),
+                        _ => state = GameState::Play,
+                    }
                 },
                 Event::KeyDown { keycode: Some(Keycode::Num2), .. } => {
                     restart(&mut field, &mut piece, &mut score, &mut lines, &mut seconds, &mut preview_piece);
                     state = GameState::Play;
                 },
                 Event::KeyDown { keycode: Some(Keycode::Num3), .. } => {
-                    state = GameState::Menu;
+                    match state {
+                        GameState::Death => (),
+                        _ => state = GameState::Menu,
+                    }
                 },
                 Event::KeyDown { keycode: Some(Keycode::Up), .. } => {
                     match state {
@@ -510,6 +517,15 @@ pub fn main() {
                 set_text(&mut canvas, &font, &texture_creator, fg_color, "4: exit", Rect::new(7, 140+180, window_width - 14, 60));
 
             },
+            GameState::Death => {
+                set_text(&mut canvas, &font, &texture_creator, at_color, "Death", Rect::new(7, 40, window_width - 14, 60));
+                set_text(&mut canvas, &font, &texture_creator, fg_color, "level: 1", Rect::new((window_width / 2 - 80) as i32, 140+0*30, 140, 30));
+                set_text(&mut canvas, &font, &texture_creator, fg_color, &format!("score: {}", score), Rect::new((window_width / 2 - 80) as i32, 140+1*30, 140, 30));
+                set_text(&mut canvas, &font, &texture_creator, fg_color, &format!("lines: {}", lines), Rect::new((window_width / 2 - 80) as i32, 140+2*30, 140, 30));
+                set_text(&mut canvas, &font, &texture_creator, fg_color, &format!("time: {:.1}", seconds), Rect::new((window_width / 2 - 80) as i32, 140+3*30, 140, 30));
+                set_text(&mut canvas, &font, &texture_creator, hl_color, "2: restart", Rect::new(7, 300+60, window_width - 14, 60));
+                set_text(&mut canvas, &font, &texture_creator, fg_color, "4: exit", Rect::new(7, 300+120, window_width - 14, 60));
+            },
             GameState::Play => {
                 // side panel
                 canvas.set_draw_color(Color::RGB(30, 30, 30));
@@ -535,12 +551,14 @@ pub fn main() {
                 if frames_to_tick <= 0 {
                     frames_to_tick = tick_once_per_frames;
 
+                    // place piece if need
                     if !piece.is_move_down_awailable(&field) {
                         piece.put_on_a_field(&mut field, true);
                         piece = preview_piece;
                         preview_piece = Piece::new();
                     }
 
+                    // remove filled lines
                     let mut filled_lines = 0;
                     for y in 0..field.len() {
                         let mut is_full = true;
@@ -572,6 +590,13 @@ pub fn main() {
                         _ => 0,
                     };
 
+                    // die if reach top of game field
+                    for x in 0..field[0].len() {
+                        if field[0][x] == 'N' {
+                            state = GameState::Death;
+                        }
+                    }
+
                     piece.force_move_y(1);
                 } else {
                     frames_to_tick -= 1;
@@ -593,7 +618,6 @@ pub fn main() {
 
                 seconds += 1./60.;
             },
-            _ => (),
         }
 
 
