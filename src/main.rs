@@ -545,8 +545,8 @@ pub fn main() {
                 }
 
                 // game field
-                level = lines / 50 + 1;
-                tick_once_per_frames = 50 / 2i32.pow(level as u32);
+                level = lines / 30 + 1;
+                tick_once_per_frames = 50 / 2i32.pow(level as u32 - 1);
 
                 if frames_to_tick <= 0 {
                     frames_to_tick = tick_once_per_frames;
