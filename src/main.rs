@@ -17,9 +17,7 @@ type GameField = [[char; 10]; 20];
 enum GameState {
     Menu,
     Play,
-    Pause,
     Death,
-    Test,
 }
 
 fn load_texture<'a>(tc: &'a TextureCreator<WindowContext>, filename: &str) -> Texture<'a> {
@@ -35,13 +33,13 @@ fn set_text(canvas: &mut Canvas<Window>, font: &Font, tc: &TextureCreator<Window
 fn write_tetris_by_textures(canvas: &mut Canvas<Window>, texture: &Texture) {
     for x in 0..19 {
         if !vec![3, 6, 10, 13, 15, 16].iter().any(|&i| i == x) {
-            canvas.copy(texture, None, Some(Rect::new(15+x*15, 15, 15, 15))).unwrap();
+            canvas.copy(texture, None, Some(Rect::new(20+x*20, 20, 20, 20))).unwrap();
         }
         if !vec![0, 2, 3, 5, 6, 7, 9, 10, 12, 13, 15, 16, 18].iter().any(|&i| i == x) {
-            canvas.copy(texture, None, Some(Rect::new(15+x*15, 30, 15, 15))).unwrap();
+            canvas.copy(texture, None, Some(Rect::new(20+x*20, 40, 20, 20))).unwrap();
         }
         if !vec![0, 2, 3, 6, 7, 9, 10, 12, 13, 15, 18].iter().any(|&i| i == x) {
-            canvas.copy(texture, None, Some(Rect::new(15+x*15, 45, 15, 15))).unwrap();
+            canvas.copy(texture, None, Some(Rect::new(20+x*20, 60, 20, 20))).unwrap();
         }
     }
 }
@@ -385,6 +383,9 @@ fn restart(field: &mut GameField, piece: &mut Piece, score: &mut i32, lines: &mu
     }
     *piece = Piece::new();
     *preview_piece = Piece::new();
+    *score = 0;
+    *lines = 0;
+    *seconds = 0.;
 }
 
 pub fn main() {
@@ -450,7 +451,7 @@ pub fn main() {
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit {..} |
-                Event::KeyDown { keycode: Some(Keycode::Num9), .. } => {
+                Event::KeyDown { keycode: Some(Keycode::Num4), .. } => {
                     break 'running
                 },
                 Event::KeyDown { keycode: Some(Keycode::Num1), .. } => {
@@ -461,12 +462,7 @@ pub fn main() {
                     state = GameState::Play;
                 },
                 Event::KeyDown { keycode: Some(Keycode::Num3), .. } => {
-                    state = GameState::Death        },
-                Event::KeyDown { keycode: Some(Keycode::Num4), .. } => {
                     state = GameState::Menu;
-                },
-                Event::KeyDown { keycode: Some(Keycode::Num0), .. } => {
-                    state = GameState::Test;
                 },
                 Event::KeyDown { keycode: Some(Keycode::Up), .. } => {
                     match state {
@@ -505,36 +501,17 @@ pub fn main() {
         canvas.clear();
 
         match state {
-            GameState::Test => {
-                for x in 0..10 {
-                    for y in 0..20 {
-                        canvas.copy(&deep_purple_piece_texture, None, Some(Rect::new(7+x*30, 7+y*30, 30, 30))).unwrap();
-                    }
-                }
-
-                canvas.copy(&green_piece_texture, None, Some(Rect::new(7+10*30+7 + 0*30, 7+5*30, 30, 30))).unwrap();
-                canvas.copy(&green_piece_texture, None, Some(Rect::new(7+11*30+7 + 0*30, 7+5*30, 30, 30))).unwrap();
-                canvas.copy(&green_piece_texture, None, Some(Rect::new(7+12*30+7 + 0*30, 7+5*30, 30, 30))).unwrap();
-                canvas.copy(&green_piece_texture, None, Some(Rect::new(7+12*30+7 + 0*30, 7+4*30, 30, 30))).unwrap();
-
-                set_text(&mut canvas, &font, &texture_creator, fg_color, "level: 1", Rect::new(7+10*30+7, 200+0*30, 4*30, 30));
-                set_text(&mut canvas, &font, &texture_creator, fg_color, "score: 1215", Rect::new(7+10*30+7, 200+1*30, 4*30, 30));
-                set_text(&mut canvas, &font, &texture_creator, fg_color, "lines: 12", Rect::new(7+10*30+7, 200+2*30, 4*30, 30));
-                set_text(&mut canvas, &font, &texture_creator, fg_color, "time: 12:15", Rect::new(7+10*30+7, 200+3*30, 4*30, 30));
-            },
             GameState::Menu => {
                 write_tetris_by_textures(&mut canvas, &green_piece_texture);
 
-                set_text(&mut canvas, &font, &texture_creator, hl_color, "1: play", Rect::new(7, 104, window_width - 14, 60));
-                set_text(&mut canvas, &font, &texture_creator, fg_color, "2: restart", Rect::new(7, 104+60, window_width - 14, 60));
-                set_text(&mut canvas, &font, &texture_creator, fg_color, "3: pause", Rect::new(7, 104+120, window_width - 14, 60));
-                set_text(&mut canvas, &font, &texture_creator, fg_color, "4: menu", Rect::new(7, 104+180, window_width - 14, 60));
-                set_text(&mut canvas, &font, &texture_creator, fg_color, "9: exit", Rect::new(7, 104+240, window_width - 14, 60));
-                set_text(&mut canvas, &font, &texture_creator, fg_color, "0: test", Rect::new(7, 104+280, window_width - 14, 60));
+                set_text(&mut canvas, &font, &texture_creator, hl_color, "1: play", Rect::new(7, 140, window_width - 14, 60));
+                set_text(&mut canvas, &font, &texture_creator, fg_color, "2: restart", Rect::new(7, 140+60, window_width - 14, 60));
+                set_text(&mut canvas, &font, &texture_creator, fg_color, "3: menu", Rect::new(7, 140+120, window_width - 14, 60));
+                set_text(&mut canvas, &font, &texture_creator, fg_color, "4: exit", Rect::new(7, 140+180, window_width - 14, 60));
 
             },
             GameState::Play => {
-
+                // side panel
                 canvas.set_draw_color(Color::RGB(30, 30, 30));
                 canvas.fill_rect(Rect::new(7+10*30+7, 0, 30*4 + 7, window_height));
 
@@ -552,6 +529,7 @@ pub fn main() {
                     }
                 }
 
+                // game field
                 let body = piece.body();
 
                 if frames_to_tick <= 0 {
@@ -562,6 +540,37 @@ pub fn main() {
                         piece = preview_piece;
                         preview_piece = Piece::new();
                     }
+
+                    let mut filled_lines = 0;
+                    for y in 0..field.len() {
+                        let mut is_full = true;
+                        for x in 0..field[y].len() {
+                            if field[y][x] != 'N' {
+                                is_full = false;
+                                break;
+                            }
+                        }
+                        if is_full {
+                            for i in (1..y+1).rev() {
+                                let temp = field[i];
+                                field[i] = field[i-1];
+                                field[i-1] = temp;
+                            }
+                            for i in 0..field[0].len() {
+                                field[0][i] = ' ';
+                            }
+                            filled_lines += 1;
+                        }
+                    }
+
+                    lines += filled_lines;
+                    score += match filled_lines {
+                        1 => 40,
+                        2 => 100,
+                        3 => 300,
+                        4 => 1200,
+                        _ => 0,
+                    };
 
                     piece.force_move_y(1);
                 } else {
@@ -581,11 +590,12 @@ pub fn main() {
                         canvas.copy(texture, None, Some(Rect::new(7+x as i32 * 30, 7+y as i32 * 30, 30, 30))).unwrap();
                     }
                 }
+
+                seconds += 1./60.;
             },
             _ => (),
         }
 
-        seconds += 1./60.;
 
         canvas.present();
         std::thread::sleep(Duration::new(0, 1_000_000_000u32 / framerate));
