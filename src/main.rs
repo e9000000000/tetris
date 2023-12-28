@@ -15,11 +15,11 @@ use rand::prelude::*;
 type GameField = [[char; 10]; 20];
 
 enum GameState {
-    menu,
-    play,
-    pause,
-    death,
-    test,
+    Menu,
+    Play,
+    Pause,
+    Death,
+    Test,
 }
 
 fn load_texture<'a>(tc: &'a TextureCreator<WindowContext>, filename: &str) -> Texture<'a> {
@@ -377,13 +377,14 @@ impl Piece {
     }
 }
 
-fn restart(field: &mut GameField, piece: &mut Piece) {
+fn restart(field: &mut GameField, piece: &mut Piece, score: &mut i32, lines: &mut i32, seconds: &mut f64, preview_piece: &mut Piece) {
     for y in 0..field.len() {
         for x in 0..field[y].len() {
             field[y][x] = ' ';
         }
     }
     *piece = Piece::new();
+    *preview_piece = Piece::new();
 }
 
 pub fn main() {
@@ -398,9 +399,13 @@ pub fn main() {
     // mut
     let mut tick_once_per_frames = 50;
     let mut frames_to_tick = 0;
-    let mut state = GameState::menu;
+    let mut state = GameState::Menu;
     let mut field: GameField = [[' '; 10]; 20];
+    let mut preview_piece = Piece::new();
     let mut piece = Piece::new();
+    let mut score = 0;
+    let mut lines = 0;
+    let mut seconds = 0.;
 
     // sdl stuff
     let sdl_context = sdl2::init().unwrap();
@@ -426,6 +431,19 @@ pub fn main() {
     let orange_piece_texture = load_texture(&texture_creator, "/orange.png");
     let green_piece_texture = load_texture(&texture_creator, "/green.png");
 
+    // select texture function
+    let get_texture = |ch: char| match ch {
+        'N' => &gray_piece_texture,
+        'Y' => &yellow_piece_texture,
+        'C' => &cyan_piece_texture,
+        'P' => &purple_piece_texture,
+        'D' => &deep_purple_piece_texture,
+        'R' => &red_piece_texture,
+        'O' => &orange_piece_texture,
+        'G' => &green_piece_texture,
+        _ => &gray_piece_texture,
+    };
+
     let mut event_pump = sdl_context.event_pump().unwrap();
     'running: loop {
         // process controls
@@ -436,30 +454,29 @@ pub fn main() {
                     break 'running
                 },
                 Event::KeyDown { keycode: Some(Keycode::Num1), .. } => {
-                    state = GameState::play;
+                    state = GameState::Play;
                 },
                 Event::KeyDown { keycode: Some(Keycode::Num2), .. } => {
-                    restart(&mut field, &mut piece);
-                    state = GameState::play;
+                    restart(&mut field, &mut piece, &mut score, &mut lines, &mut seconds, &mut preview_piece);
+                    state = GameState::Play;
                 },
                 Event::KeyDown { keycode: Some(Keycode::Num3), .. } => {
-                    state = GameState::pause;
-                },
+                    state = GameState::Death        },
                 Event::KeyDown { keycode: Some(Keycode::Num4), .. } => {
-                    state = GameState::menu;
+                    state = GameState::Menu;
                 },
                 Event::KeyDown { keycode: Some(Keycode::Num0), .. } => {
-                    state = GameState::test;
+                    state = GameState::Test;
                 },
                 Event::KeyDown { keycode: Some(Keycode::Up), .. } => {
                     match state {
-                        GameState::play => piece.rotate(&field),
+                        GameState::Play => piece.rotate(&field),
                         _ => (),
                     }
                 },
                 Event::KeyDown { keycode: Some(Keycode::Left), .. } => {
                     match state {
-                        GameState::play => {
+                        GameState::Play => {
                             piece.move_x(-1, &field);
                         },
                         _ => (),
@@ -467,7 +484,7 @@ pub fn main() {
                 },
                 Event::KeyDown { keycode: Some(Keycode::Right), .. } => {
                     match state {
-                        GameState::play => {
+                        GameState::Play => {
                             piece.move_x(1, &field);
                         },
                         _ => (),
@@ -475,7 +492,7 @@ pub fn main() {
                 },
                 Event::KeyDown { keycode: Some(Keycode::Down), .. } => {
                     match state {
-                        GameState::play => frames_to_tick = 1,
+                        GameState::Play => frames_to_tick = 1,
                         _ => (),
                     }
                 },
@@ -488,7 +505,7 @@ pub fn main() {
         canvas.clear();
 
         match state {
-            GameState::test => {
+            GameState::Test => {
                 for x in 0..10 {
                     for y in 0..20 {
                         canvas.copy(&deep_purple_piece_texture, None, Some(Rect::new(7+x*30, 7+y*30, 30, 30))).unwrap();
@@ -505,7 +522,7 @@ pub fn main() {
                 set_text(&mut canvas, &font, &texture_creator, fg_color, "lines: 12", Rect::new(7+10*30+7, 200+2*30, 4*30, 30));
                 set_text(&mut canvas, &font, &texture_creator, fg_color, "time: 12:15", Rect::new(7+10*30+7, 200+3*30, 4*30, 30));
             },
-            GameState::menu => {
+            GameState::Menu => {
                 write_tetris_by_textures(&mut canvas, &green_piece_texture);
 
                 set_text(&mut canvas, &font, &texture_creator, hl_color, "1: play", Rect::new(7, 104, window_width - 14, 60));
@@ -516,18 +533,34 @@ pub fn main() {
                 set_text(&mut canvas, &font, &texture_creator, fg_color, "0: test", Rect::new(7, 104+280, window_width - 14, 60));
 
             },
-            GameState::play => {
+            GameState::Play => {
+
                 canvas.set_draw_color(Color::RGB(30, 30, 30));
                 canvas.fill_rect(Rect::new(7+10*30+7, 0, 30*4 + 7, window_height));
+
+                set_text(&mut canvas, &font, &texture_creator, fg_color, "level: 1", Rect::new(7+10*30+7, 200+0*30, 4*30, 30));
+                set_text(&mut canvas, &font, &texture_creator, fg_color, &format!("score: {}", score), Rect::new(7+10*30+7, 200+1*30, 4*30, 30));
+                set_text(&mut canvas, &font, &texture_creator, fg_color, &format!("lines: {}", lines), Rect::new(7+10*30+7, 200+2*30, 4*30, 30));
+                set_text(&mut canvas, &font, &texture_creator, fg_color, &format!("time: {:.1}", seconds), Rect::new(7+10*30+7, 200+3*30, 4*30, 30));
+
+                let preview_body = preview_piece.body();
+                for y in 0..4 {
+                    for x in 0..4 {
+                        if preview_body[y][x] != ' ' {
+                            canvas.copy(get_texture(preview_body[y][x]), None, Some(Rect::new(7+(10 + x as i32) * 30+7, 7+(3 + y as i32)*30, 30, 30))).unwrap();
+                        }
+                    }
+                }
 
                 let body = piece.body();
 
                 if frames_to_tick <= 0 {
                     frames_to_tick = tick_once_per_frames;
 
-                    if (!piece.is_move_down_awailable(&field)) {
+                    if !piece.is_move_down_awailable(&field) {
                         piece.put_on_a_field(&mut field, true);
-                        piece = Piece::new();
+                        piece = preview_piece;
+                        preview_piece = Piece::new();
                     }
 
                     piece.force_move_y(1);
@@ -537,23 +570,13 @@ pub fn main() {
 
                 piece.put_on_a_field(&mut field, false);
 
-                // display field
+                // disPlay field
                 for y in 0..field.len() {
                     for x in 0..field[y].len() {
                         if field[y][x] == ' ' {
                             continue
                         }
-                        let texture = match field[y][x] {
-                            'N' => &gray_piece_texture,
-                            'Y' => &yellow_piece_texture,
-                            'C' => &cyan_piece_texture,
-                            'P' => &purple_piece_texture,
-                            'D' => &deep_purple_piece_texture,
-                            'R' => &red_piece_texture,
-                            'O' => &orange_piece_texture,
-                            'G' => &green_piece_texture,
-                            _ => &gray_piece_texture,
-                        };
+                        let texture = get_texture(field[y][x]);
 
                         canvas.copy(texture, None, Some(Rect::new(7+x as i32 * 30, 7+y as i32 * 30, 30, 30))).unwrap();
                     }
@@ -562,7 +585,9 @@ pub fn main() {
             _ => (),
         }
 
+        seconds += 1./60.;
+
         canvas.present();
-        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / framerate));
+        std::thread::sleep(Duration::new(0, 1_000_000_000u32 / framerate));
     }
 }
