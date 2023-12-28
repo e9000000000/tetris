@@ -7,10 +7,10 @@ use sdl2::pixels::Color;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::rect::Rect;
-use sdl2::image::{InitFlag, LoadTexture};
+use sdl2::image::LoadTexture;
 use sdl2::video::{Window, WindowContext};
 use sdl2::ttf::Font;
-use rand::prelude::*;
+use rand;
 
 type GameField = [[char; 10]; 20];
 
@@ -399,7 +399,7 @@ pub fn main() {
     let at_color = Color::RGB(204, 40, 40);
 
     // mut
-    let mut tick_once_per_frames = 50;
+    let mut tick_once_per_frames;
     let mut frames_to_tick = 0;
     let mut state = GameState::Menu;
     let mut field: GameField = [[' '; 10]; 20];
@@ -423,8 +423,6 @@ pub fn main() {
     let font = ttf_context.load_font(font_path, 128).unwrap();
 
     // loading textures
-    let chimp_texture = texture_creator.load_texture("./assets/chimp.png").unwrap();
-
     let gray_piece_texture = load_texture(&texture_creator, "/none.png");
     let yellow_piece_texture = load_texture(&texture_creator, "/yellow.png");
     let cyan_piece_texture = load_texture(&texture_creator, "/cyan.png");
@@ -505,7 +503,7 @@ pub fn main() {
         }
 
         // clear canvas
-        canvas.set_draw_color(Color::RGB(0, 0, 0));
+        canvas.set_draw_color(bg_color);
         canvas.clear();
 
         match state {
@@ -530,7 +528,7 @@ pub fn main() {
             GameState::Play => {
                 // side panel
                 canvas.set_draw_color(Color::RGB(30, 30, 30));
-                canvas.fill_rect(Rect::new(7+10*30+7, 0, 30*4 + 7, window_height));
+                canvas.fill_rect(Rect::new(7+10*30+7, 0, 30*4 + 7, window_height)).unwrap();
 
                 set_text(&mut canvas, &font, &texture_creator, fg_color, &format!("level: {}", level), Rect::new(7+10*30+7, 200+0*30, 4*30, 30));
                 set_text(&mut canvas, &font, &texture_creator, fg_color, &format!("score: {}", score), Rect::new(7+10*30+7, 200+1*30, 4*30, 30));
@@ -547,8 +545,6 @@ pub fn main() {
                 }
 
                 // game field
-                let body = piece.body();
-
                 level = lines / 50 + 1;
                 tick_once_per_frames = 50 / 2i32.pow(level as u32);
 
