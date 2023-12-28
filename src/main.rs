@@ -10,6 +10,7 @@ use sdl2::rect::Rect;
 use sdl2::image::{InitFlag, LoadTexture};
 use sdl2::video::{Window, WindowContext};
 use sdl2::ttf::Font;
+use rand::prelude::*;
 
 type GameField = [[char; 10]; 20];
 
@@ -53,12 +54,21 @@ struct Piece {
 }
 
 impl Piece {
-    fn new(literal: char) -> Piece {
+    fn new() -> Piece {
         return Piece {
             x: 5,
             y: 0,
             rotation: 0,
-            literal: literal,
+            literal: match rand::random::<u8>() % 6 {
+                0 => 'Y',
+                1 => 'C',
+                2 => 'P',
+                3 => 'D',
+                4 => 'R',
+                5 => 'O',
+                6 => 'G',
+                _ => 'N',
+            },
         }
     }
 
@@ -130,7 +140,27 @@ impl Piece {
         self.y += delta;
     }
 
-    fn rotate(&mut self) {
+    fn rotate(&mut self, field: &GameField) {
+        let rot_backup = self.rotation;
+        self.rotation = (self.rotation + 1) % 4;
+        let body = self.body();
+        self.rotation = rot_backup;
+
+        for y in 0..4 {
+            for x in 0..4 {
+                let fx = self.x + x - 2;
+                let fy = self.y + y - 2;
+
+                if body[y as usize][x as usize] == ' ' || fy < 0 {
+                    continue;
+                }
+
+                if fx < 0 || fx >= 10 || fy >= 20 || field[fy as usize][fx as usize] == 'N' {
+                    return;
+                }
+            }
+        }
+
         self.rotation = (self.rotation + 1) % 4;
     }
 
@@ -174,35 +204,170 @@ impl Piece {
         ];
 
         return match lit {
-            // 'Y' => &yellow_piece_texture,
-            // 'C' => &cyan_piece_texture,
-            // 'P' => &purple_piece_texture,
-            // 'D' => &deep_purple_piece_texture,
-            // 'R' => &red_piece_texture,
-            // 'O' => &orange_piece_texture,
-            'G' => match rot {
+            'Y' => [
+                [' ', ' ', ' ', ' '],
+                [' ', lit, lit, ' '],
+                [' ', lit, lit, ' '],
+                [' ', ' ', ' ', ' '],
+            ],
+            'C' => match rot {
                 0 => [
                     [' ', ' ', ' ', ' '],
-                    [' ', ' ', lit, lit],
-                    [' ', lit, lit, ' '],
+                    [lit, lit, lit, lit],
+                    [' ', ' ', ' ', ' '],
                     [' ', ' ', ' ', ' '],
                 ],
                 1 => [
                     [' ', ' ', lit, ' '],
-                    [' ', ' ', lit, lit],
-                    [' ', ' ', ' ', lit],
+                    [' ', ' ', lit, ' '],
+                    [' ', ' ', lit, ' '],
+                    [' ', ' ', lit, ' '],
+                ],
+                2 => [
+                    [' ', ' ', ' ', ' '],
+                    [' ', ' ', ' ', ' '],
+                    [lit, lit, lit, lit],
+                    [' ', ' ', ' ', ' '],
+                ],
+                3 => [
+                    [' ', lit, ' ', ' '],
+                    [' ', lit, ' ', ' '],
+                    [' ', lit, ' ', ' '],
+                    [' ', lit, ' ', ' '],
+                ],
+                _ => default,
+            },
+            'P' => match rot {
+                0 => [
+                    [' ', lit, ' ', ' '],
+                    [lit, lit, lit, ' '],
+                    [' ', ' ', ' ', ' '],
+                    [' ', ' ', ' ', ' '],
+                ],
+                1 => [
+                    [' ', lit, ' ', ' '],
+                    [' ', lit, lit, ' '],
+                    [' ', lit, ' ', ' '],
                     [' ', ' ', ' ', ' '],
                 ],
                 2 => [
                     [' ', ' ', ' ', ' '],
-                    [' ', ' ', lit, lit],
+                    [lit, lit, lit, ' '],
+                    [' ', lit, ' ', ' '],
+                    [' ', ' ', ' ', ' '],
+                ],
+                3 => [
+                    [' ', lit, ' ', ' '],
+                    [lit, lit, ' ', ' '],
+                    [' ', lit, ' ', ' '],
+                    [' ', ' ', ' ', ' '],
+                ],
+                _ => default,
+            },
+            'D' => match rot {
+                0 => [
+                    [lit, ' ', ' ', ' '],
+                    [lit, lit, lit, ' '],
+                    [' ', ' ', ' ', ' '],
+                    [' ', ' ', ' ', ' '],
+                ],
+                1 => [
+                    [' ', lit, lit, ' '],
+                    [' ', lit, ' ', ' '],
+                    [' ', lit, ' ', ' '],
+                    [' ', ' ', ' ', ' '],
+                ],
+                2 => [
+                    [' ', ' ', ' ', ' '],
+                    [lit, lit, lit, ' '],
+                    [' ', ' ', lit, ' '],
+                    [' ', ' ', ' ', ' '],
+                ],
+                3 => [
+                    [' ', lit, ' ', ' '],
+                    [' ', lit, ' ', ' '],
+                    [lit, lit, ' ', ' '],
+                    [' ', ' ', ' ', ' '],
+                ],
+                _ => default,
+            },
+            'R' => match rot {
+                0 => [
+                    [lit, lit, ' ', ' '],
+                    [' ', lit, lit, ' '],
+                    [' ', ' ', ' ', ' '],
+                    [' ', ' ', ' ', ' '],
+                ],
+                1 => [
+                    [' ', ' ', lit, ' '],
+                    [' ', lit, lit, ' '],
+                    [' ', lit, ' ', ' '],
+                    [' ', ' ', ' ', ' '],
+                ],
+                2 => [
+                    [' ', ' ', ' ', ' '],
+                    [lit, lit, ' ', ' '],
                     [' ', lit, lit, ' '],
                     [' ', ' ', ' ', ' '],
                 ],
                 3 => [
                     [' ', lit, ' ', ' '],
+                    [lit, lit, ' ', ' '],
+                    [lit, ' ', ' ', ' '],
+                    [' ', ' ', ' ', ' '],
+                ],
+                _ => default,
+            },
+            'O' => match rot {
+                0 => [
+                    [' ', ' ', lit, ' '],
+                    [lit, lit, lit, ' '],
+                    [' ', ' ', ' ', ' '],
+                    [' ', ' ', ' ', ' '],
+                ],
+                1 => [
+                    [' ', lit, ' ', ' '],
+                    [' ', lit, ' ', ' '],
+                    [' ', lit, lit, ' '],
+                    [' ', ' ', ' ', ' '],
+                ],
+                2 => [
+                    [' ', ' ', ' ', ' '],
+                    [lit, lit, lit, ' '],
+                    [lit, ' ', ' ', ' '],
+                    [' ', ' ', ' ', ' '],
+                ],
+                3 => [
+                    [lit, lit, ' ', ' '],
+                    [' ', lit, ' ', ' '],
+                    [' ', lit, ' ', ' '],
+                    [' ', ' ', ' ', ' '],
+                ],
+                _ => default,
+            },
+            'G' => match rot {
+                0 => [
+                    [' ', lit, lit, ' '],
+                    [lit, lit, ' ', ' '],
+                    [' ', ' ', ' ', ' '],
+                    [' ', ' ', ' ', ' '],
+                ],
+                1 => [
+                    [' ', lit, ' ', ' '],
                     [' ', lit, lit, ' '],
                     [' ', ' ', lit, ' '],
+                    [' ', ' ', ' ', ' '],
+                ],
+                2 => [
+                    [' ', ' ', ' ', ' '],
+                    [' ', lit, lit, ' '],
+                    [lit, lit, ' ', ' '],
+                    [' ', ' ', ' ', ' '],
+                ],
+                3 => [
+                    [lit, ' ', ' ', ' '],
+                    [lit, lit, ' ', ' '],
+                    [' ', lit, ' ', ' '],
                     [' ', ' ', ' ', ' '],
                 ],
                 _ => default,
@@ -218,7 +383,7 @@ fn restart(field: &mut GameField, piece: &mut Piece) {
             field[y][x] = ' ';
         }
     }
-    *piece = Piece::new('G');
+    *piece = Piece::new();
 }
 
 pub fn main() {
@@ -235,7 +400,7 @@ pub fn main() {
     let mut frames_to_tick = 0;
     let mut state = GameState::menu;
     let mut field: GameField = [[' '; 10]; 20];
-    let mut piece = Piece::new('G');
+    let mut piece = Piece::new();
 
     // sdl stuff
     let sdl_context = sdl2::init().unwrap();
@@ -288,7 +453,7 @@ pub fn main() {
                 },
                 Event::KeyDown { keycode: Some(Keycode::Up), .. } => {
                     match state {
-                        GameState::play => piece.rotate(),
+                        GameState::play => piece.rotate(&field),
                         _ => (),
                     }
                 },
@@ -362,7 +527,7 @@ pub fn main() {
 
                     if (!piece.is_move_down_awailable(&field)) {
                         piece.put_on_a_field(&mut field, true);
-                        piece = Piece::new('G');
+                        piece = Piece::new();
                     }
 
                     piece.force_move_y(1);
