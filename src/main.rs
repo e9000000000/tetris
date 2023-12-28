@@ -405,6 +405,7 @@ pub fn main() {
     let mut field: GameField = [[' '; 10]; 20];
     let mut preview_piece = Piece::new();
     let mut piece = Piece::new();
+    let mut level = 1;
     let mut score = 0;
     let mut lines = 0;
     let mut seconds = 0.;
@@ -531,7 +532,7 @@ pub fn main() {
                 canvas.set_draw_color(Color::RGB(30, 30, 30));
                 canvas.fill_rect(Rect::new(7+10*30+7, 0, 30*4 + 7, window_height));
 
-                set_text(&mut canvas, &font, &texture_creator, fg_color, "level: 1", Rect::new(7+10*30+7, 200+0*30, 4*30, 30));
+                set_text(&mut canvas, &font, &texture_creator, fg_color, &format!("level: {}", level), Rect::new(7+10*30+7, 200+0*30, 4*30, 30));
                 set_text(&mut canvas, &font, &texture_creator, fg_color, &format!("score: {}", score), Rect::new(7+10*30+7, 200+1*30, 4*30, 30));
                 set_text(&mut canvas, &font, &texture_creator, fg_color, &format!("lines: {}", lines), Rect::new(7+10*30+7, 200+2*30, 4*30, 30));
                 set_text(&mut canvas, &font, &texture_creator, fg_color, &format!("time: {:.1}", seconds), Rect::new(7+10*30+7, 200+3*30, 4*30, 30));
@@ -547,6 +548,9 @@ pub fn main() {
 
                 // game field
                 let body = piece.body();
+
+                level = lines / 50 + 1;
+                tick_once_per_frames = 50 / 2i32.pow(level as u32);
 
                 if frames_to_tick <= 0 {
                     frames_to_tick = tick_once_per_frames;
