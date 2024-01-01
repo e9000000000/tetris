@@ -5,7 +5,9 @@
 
 # controls
 1, 2, 3, ... - select option (work always except death screen)
-arrows - move piece
+left, right - move piece
+down - speed up drop
+up - drow down
 z - rotate left
 x - rotate right
 

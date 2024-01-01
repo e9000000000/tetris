@@ -146,6 +146,12 @@ impl Piece {
         self.y += delta;
     }
 
+    fn drop_down(&mut self, field: &GameField) {
+        while self.is_move_down_awailable(&field) {
+            self.force_move_y(1);
+        }
+    }
+
     fn rotate(&mut self, field: &GameField, direction: i32) {
         let rot_backup = self.rotation;
         self.rotation = (self.rotation + direction) % 4;
@@ -176,6 +182,10 @@ impl Piece {
                     x -= 1;
                     self.x -= 1;
                     continue;
+                }
+
+                if fy < 0 {
+                    continue
                 }
 
                 if fy >= 20 || field[fy as usize][fx as usize] == 'N' {
@@ -529,6 +539,14 @@ pub fn main() {
                 Event::KeyDown { keycode: Some(Keycode::Down), .. } => {
                     match state {
                         GameState::Play => frames_to_tick = 1,
+                        _ => (),
+                    }
+                },
+                Event::KeyDown { keycode: Some(Keycode::Up), .. } => {
+                    match state {
+                        GameState::Play => {
+                             piece.drop_down(&field);
+                        },
                         _ => (),
                     }
                 },
