@@ -138,28 +138,48 @@ impl Piece {
         self.y += delta;
     }
 
-    fn rotate(&mut self, field: &GameField) {
+    fn rotate(&mut self, field: &GameField, direction: i32) {
         let rot_backup = self.rotation;
-        self.rotation = (self.rotation + 1) % 4;
+        self.rotation = (self.rotation + direction) % 4;
+        if self.rotation < 0 {
+            self.rotation = 3;
+        }
         let body = self.body();
         self.rotation = rot_backup;
 
         for y in 0..4 {
-            for x in 0..4 {
+            let mut x = -1;
+            while x < 3 {
+                x += 1;
+
                 let fx = self.x + x - 2;
                 let fy = self.y + y - 2;
 
-                if body[y as usize][x as usize] == ' ' || fy < 0 {
+                if body[y as usize][x as usize] == ' ' {
                     continue;
                 }
 
-                if fx < 0 || fx >= 10 || fy >= 20 || field[fy as usize][fx as usize] == 'N' {
+                if fx < 0 {
+                    x -= 1;
+                    self.x += 1;
+                    continue;
+                }
+                if fx >= 10 {
+                    x -= 1;
+                    self.x -= 1;
+                    continue;
+                }
+
+                if fy >= 20 || field[fy as usize][fx as usize] == 'N' {
                     return;
                 }
             }
         }
 
-        self.rotation = (self.rotation + 1) % 4;
+        self.rotation = (self.rotation + direction) % 4;
+        if self.rotation < 0 {
+            self.rotation = 3;
+        }
     }
 
     fn put_on_a_field(&self, field: &mut GameField, force_gray: bool) {
@@ -470,9 +490,15 @@ pub fn main() {
                         _ => state = GameState::Menu,
                     }
                 },
-                Event::KeyDown { keycode: Some(Keycode::Up), .. } => {
+                Event::KeyDown { keycode: Some(Keycode::Z), .. } => {
                     match state {
-                        GameState::Play => piece.rotate(&field),
+                        GameState::Play => piece.rotate(&field, -1),
+                        _ => (),
+                    }
+                },
+                Event::KeyDown { keycode: Some(Keycode::X), .. } => {
+                    match state {
+                        GameState::Play => piece.rotate(&field, 1),
                         _ => (),
                     }
                 },
