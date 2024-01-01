@@ -80,10 +80,14 @@ impl Piece {
                         if body[y][x] != ' ' {
                             let left_cell_i = self.x + x as i32 - 2 - 1;
                             let cy = self.y - 2 + y as i32;
+
+                            if left_cell_i < 0 {
+                                return false;
+                            }
                             if cy < 0 {
                                 continue;
                             }
-                            if left_cell_i < 0 || field[cy as usize][left_cell_i as usize] == 'N' {
+                            if field[cy as usize][left_cell_i as usize] == 'N' {
                                 return false;
                             }
                             break;
@@ -97,10 +101,14 @@ impl Piece {
                         if body[y][x] != ' ' {
                             let right_cell_i = self.x + x as i32 - 2 + 1;
                             let cy = self.y - 2 + y as i32;
+
+                            if right_cell_i >= 10 {
+                                return false;
+                            }
                             if cy < 0 {
                                 continue;
                             }
-                            if right_cell_i >= 10 || field[cy as usize][right_cell_i as usize] == 'N' {
+                            if field[cy as usize][right_cell_i as usize] == 'N' {
                                 return false;
                             }
                             break;
