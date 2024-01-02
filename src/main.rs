@@ -53,20 +53,24 @@ struct Piece {
 
 impl Piece {
     fn new() -> Piece {
+        let lit = match rand::random::<u8>() % 6 {
+            0 => 'Y',
+            1 => 'C',
+            2 => 'P',
+            3 => 'D',
+            4 => 'R',
+            5 => 'O',
+            6 => 'G',
+            _ => 'N',
+        };
         return Piece {
             x: 5,
-            y: 0,
-            rotation: 0,
-            literal: match rand::random::<u8>() % 6 {
-                0 => 'Y',
-                1 => 'C',
-                2 => 'P',
-                3 => 'D',
-                4 => 'R',
-                5 => 'O',
-                6 => 'G',
-                _ => 'N',
+            y: match lit {
+                'C' => 0,
+                _ => 1,
             },
+            rotation: 0,
+            literal: lit,
         }
     }
 
