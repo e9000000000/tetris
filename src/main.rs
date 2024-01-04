@@ -549,7 +549,8 @@ pub fn main() {
                 Event::KeyDown { keycode: Some(Keycode::Up), .. } => {
                     match state {
                         GameState::Play => {
-                             piece.drop_down(&field);
+                            piece.drop_down(&field);
+                            frames_to_tick = 1;
                         },
                         _ => (),
                     }
