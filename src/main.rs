@@ -465,6 +465,7 @@ pub fn main() {
     let font = ttf_context.load_font(font_path, 128).unwrap();
 
     // loading textures
+    let grid_texture = load_texture(&texture_creator, "/grid.png");
     let gray_piece_texture = load_texture(&texture_creator, "/none.png");
     let yellow_piece_texture = load_texture(&texture_creator, "/yellow.png");
     let cyan_piece_texture = load_texture(&texture_creator, "/cyan.png");
@@ -586,6 +587,8 @@ pub fn main() {
                 // side panel
                 canvas.set_draw_color(Color::RGB(30, 30, 30));
                 canvas.fill_rect(Rect::new(7+10*30+7, 0, 30*4 + 7, window_height)).unwrap();
+
+                canvas.copy(&grid_texture, None, Rect::new(7, 7, 30*10, 30*20));
 
                 set_text(&mut canvas, &font, &texture_creator, fg_color, &format!("level: {}", level), Rect::new(7+10*30+7, 200+0*30, 4*30, 30));
                 set_text(&mut canvas, &font, &texture_creator, fg_color, &format!("score: {}", score), Rect::new(7+10*30+7, 200+1*30, 4*30, 30));
