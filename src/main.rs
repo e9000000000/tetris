@@ -455,8 +455,10 @@ pub fn main() {
     // sdl stuff
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
-    let window = video_subsystem.window("tetris", window_width, window_height).build().unwrap();
-    let mut canvas = window.into_canvas().build().unwrap();
+    let mut window = video_subsystem.window("tetris", window_width, window_height);
+    window.resizable();
+    let window_builder = window.build().unwrap();
+    let mut canvas = window_builder.into_canvas().build().unwrap();
     let texture_creator = canvas.texture_creator();
     let ttf_context = sdl2::ttf::init().unwrap();
 
